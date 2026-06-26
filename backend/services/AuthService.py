@@ -1,13 +1,6 @@
-from tkinter import NO
-
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
-from database import db
-from sqlalchemy.orm import Session
 
-from entities.user import User
-from models.auth.AuthDtos import LoginDto
 from config import settings
 
 import jwt

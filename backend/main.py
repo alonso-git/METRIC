@@ -1,4 +1,4 @@
-from fastapi import FastAPI, routing
+from fastapi import FastAPI
 from database import engine, Base
 import routers
 
@@ -21,3 +21,4 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(routers.user)
 app.include_router(routers.auth)
+app.include_router(routers.chat)
