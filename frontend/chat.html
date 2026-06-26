@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>METRIC - Support Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-slate-900 text-white h-screen flex flex-col">
+    <header class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl font-bold text-blue-500">METRIC</span>
+            <span class="bg-blue-900 text-blue-300 text-xs px-2 py-0.5 rounded-full font-semibold">Agent View</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span id="agentName" class="text-slate-300 text-sm">Loading agent...</span>
+            <button id="logoutBtn"
+                class="bg-red-600 hover:bg-red-700 text-xs font-bold px-3 py-1.5 rounded transition cursor-pointer">
+                log out
+            </button>
+        </div>
+    </header>
+    <main class="flex-1 flex overflow-hidden">
+        <section class="flex-1 flex flex-col bg-slate-950">
+            <div id="chatFeed" class="flex-1 p-4 overflow-y-auto space-y-4">
+                <div class="text-center text-slate-500 text-xs my-2"> char started securely.Local link active
+                </div>
+            </div>
+            <div class="p-4 bg-slate-900 border-t border-slate-800 flex space-x-2">
+                <input type="text" id="messageInput"
+                    class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    placeholder="Escribe una respuesta para el cliente... (Presiona Enter)">
+                <button id="sendBtn"
+                    class="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-bold transition cursor-pointer">Enviar</button>
+            </div>
+        </section>
+        <section class="w-80 bg-slate-900 border-l border-slate-800 p-4 flex flex-col space-y-4 overflow-y-auto">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">NLP Real-Time Insights</h3>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 block mb-1">Customer Intent</span>
+                <div id="aiIntent" class="text-lg font-semibold text-amber-400">waiting for a message...</div>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex-1 flex flex-col">
+                <span class="text-xs text-slate-400 block mb-2">support suggestions</span>
+                <div id="aiRecommendations" class="text-sm text-slate-300 italic space-y-2 flex-1">
+                    The AI assistant will analyze incoming messages to suggest optimal responses here.
+                </div>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="js/chat/chatUI.js"></script>
+</body>
+
+</html>
