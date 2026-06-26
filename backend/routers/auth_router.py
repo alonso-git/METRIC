@@ -23,9 +23,6 @@ def login(credentials: LoginDto, db: Session = Depends(db)):
 
     user = db.scalars(stmt).one_or_none()
 
-    print(f"DEBUG: Password length: {len(credentials.password)}")
-    print(f"DEBUG: Hash length: {len(user.password_hash)}")
-
     if user:
         
         try:
@@ -40,4 +37,7 @@ def login(credentials: LoginDto, db: Session = Depends(db)):
     
     raise HTTPException(401, "Incorect email or password")
 
-            
+@auth.get("/my-profile")
+def get_profile(current_user: dict = Depends(AuthService.verify_user_token)):
+    # You already have the role and user_id here!
+    return {"message": f"Hello user {current_user['user_id']}, your role is {current_user['role']}"}

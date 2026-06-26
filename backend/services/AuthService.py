@@ -1,4 +1,7 @@
-from fastapi import Depends
+from tkinter import NO
+
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from database import db
 from sqlalchemy.orm import Session
@@ -9,16 +12,6 @@ from config import settings
 
 import jwt
 from datetime import datetime, timedelta, timezone
-
-def verify_user_credentials(credentials: LoginDto, db: Session = Depends(db)) -> bool:
-
-    stmt = select(User).where(User.email == credentials.email).where(User.password_hash == credentials.password)
-    user = db.scalars(stmt).one_or_none()
-
-    if (user):
-        return True
-    else:
-        return False
     
 def create_access_token(user_id: int, role: str):
     payload = {
@@ -29,5 +22,36 @@ def create_access_token(user_id: int, role: str):
 
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
-def decode_access_token(token: str):
-    return jwt.decode(token, settings.jwt_secret_key, algorithms=settings.jwt_algorithm)
+security = HTTPBearer()
+
+def verify_user_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+
+        user_id = payload.get("sub")
+        user_role = payload.get("role")
+
+        if user_id is None:
+            raise HTTPException(401, "Invalid token")
+        
+        return {"user_id": user_id, "role": user_role}
+    
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(403, "Token has expired")
+    
+    except jwt.InvalidTokenError:
+        raise HTTPException(401, "Invalid token")
+    
+def verify_user_is_agent(user: dict = Depends(verify_user_token)):
+    if user["role"] == "agent":
+        return user
+    
+    raise HTTPException(403, "Not an agent")
+
+def verify_user_is_client(user: dict = Depends(verify_user_token)):
+    if user["role"] == "client":
+        return user
+    
+    raise HTTPException(403, "Not a client")

@@ -3,8 +3,18 @@ from database import engine, Base
 import routers
 
 app = FastAPI(
-    title="Role-Based Access Mock",
-    description="Simulating JWT roles using integers."
+    title="METRIC",
+    components={
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
+    # Applies this scheme to all endpoints globally
+    security=[{"BearerAuth": []}]
 )
 
 Base.metadata.create_all(bind=engine)

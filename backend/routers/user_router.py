@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from passlib.context import CryptContext
 
+from services.AuthService import verify_user_is_agent
 from database import db
 from entities import User, User_response
 
@@ -40,7 +41,11 @@ def create_client_user(user_data: auth.SigninDto, db: Session = Depends(db)) -> 
     return new_user
 
 @user.post("/agents")
-def create_agent_user(user_data: auth.SigninDto, db: Session = Depends(db)) -> User_response:
+def create_agent_user(
+    user_data: auth.SigninDto,
+    db: Session = Depends(db),
+    user: dict = Depends(verify_user_is_agent)
+) -> User_response:
     """
     Creates a new user with role "client"
     """
@@ -60,7 +65,7 @@ def create_agent_user(user_data: auth.SigninDto, db: Session = Depends(db)) -> U
     return new_user
 
 @user.get("/")
-def get_users(db: Session = Depends(db)):
+def get_users(db: Session = Depends(db), user: dict = Depends(verify_user_is_agent)):
     """Fetches a specific user by ID."""
     
     users = db.scalars(select(User)).all()
