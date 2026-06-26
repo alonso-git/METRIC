@@ -15,6 +15,6 @@ To replicate Python environment and run the server, follow these steps:
 5. Install pip dependencies: *pip install -r requirements.txt*
 6. Run the server: *fastapi dev main.py*
 7. Documentation will be available at: *127.0.0.1:8000/docs*
-. Done!
+8. Done!
 
 If the file *requirements.txt* is not available in the repo, yell at the owner.
