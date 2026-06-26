@@ -13,6 +13,8 @@ To replicate Python environment and run the server, follow these steps:
     *python -m venv <env-name>*
     *python3 -m venv <env-name>* *If first one fails*
 5. Install pip dependencies: *pip install -r requirements.txt*
-6. Done!
+6. Run the server: *fastapi dev main.py*
+7. Documentation will be available at: *127.0.0.1:8000/docs*
+. Done!
 
 If the file *requirements.txt* is not available in the repo, yell at the owner.
