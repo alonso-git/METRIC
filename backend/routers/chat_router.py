@@ -44,6 +44,17 @@ def post_message(msg: message_post, db: Session = Depends(db), user: dict = Depe
 
     db.commit()
 
+@chat.get("/status/{chat_id}")
+def check_status(
+    chat_id: int,
+    db: Session = Depends(db),
+    user: dict = Depends(verify_user_token)
+):
+    chat = db.scalar(select(Chat).where(Chat.id == chat_id))
+
+    if chat is None:
+        raise HTTPException(404, "Chat not found")
+
 @chat.get("/{chat_id}")
 def get_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends(verify_user_token)) -> chat_response:
     chat = db.scalar(select(Chat).where(Chat.id == chat_id))

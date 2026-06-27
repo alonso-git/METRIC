@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from entities.chat import chat_response
 from database import Base
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 class User(Base):
     __tablename__ = "user"
@@ -22,6 +22,6 @@ class user_response(BaseModel):
     email: str
     role: str
 
-    chats: list[chat_response]
+    chats: list[chat_response] = Field(default=[])
 
     model_config = ConfigDict(from_attributes=True)
