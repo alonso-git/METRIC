@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    document.getElementById('agentName').innerText = "Agent: Mariana Soto";
+
+    document.getElementById('agentName').innerText = `Agent: ${localStorage.getItem('agentName') || 'Mariana Soto'}`;
 });
 
 sendBtn.addEventListener('click', handleOutgoing);

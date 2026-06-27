@@ -1,41 +1,43 @@
 <!DOCTYPE html>
-<html lang="es">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>METRIC - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>METRIC - Authentication</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
+<body class="bg-slate-950 text-slate-100 flex items-center justify-center min-h-screen font-sans">
 
-<body class="bg-slate-950 flex justify-center items-center h-screen font-sans">
-    <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl w-96 text-white">
-        <div class="mb-6 text-center">
-            <h2 class="text-3xl font-extrabold text-blue-500 tracking-wide">METRIC</h2>
-            <p class="text-slate-400 text-sm mt-1">AI Support Chat System</p>
-        </div>
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl">
+        
+        <h1 class="text-2xl font-bold text-center tracking-tight mb-2 text-white">Welcome Back</h1>
+        <p id="formSubtitle" class="text-sm text-slate-400 text-center mb-6">Enter your credentials to access the METRIC platform.</p>
+
         <div class="space-y-4">
             <div>
-                <label for="username"
-                    class="block mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">Usuario</label>
-                <input type="text" id="username"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                    placeholder="Ingresa tu usuario">
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Username</label>
+                <input type="text" id="username" placeholder="e.g., mariana" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
             </div>
             <div>
-                <label for="password"
-                    class="block mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">Contraseña</label>
-                <input type="password" id="password"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                    placeholder="••••••••">
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Password</label>
+                <input type="password" id="password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
             </div>
-            <button id="loginBtn"
-                class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors cursor-pointer">
-                Log in
-            </button>
         </div>
-        <div id="message" class="mt-4 text-center text-sm font-medium min-h-[20px]"></div>
+
+        <div id="message" class="hidden"></div>
+
+        <button id="loginBtn" class="w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-blue-600/20 text-sm">
+            Login to Metric
+        </button>
+
+        <div class="mt-6 text-center">
+            <p id="toggleText" class="text-slate-400 text-sm">
+                Don't have an account? 
+                <a href="#" id="toggleLink" class="text-blue-400 hover:text-blue-300 font-medium transition-colors">Sign up here</a>
+            </p>
+        </div>
     </div>
+
     <script type="module" src="js/auth/authUI.js"></script>
 </body>
-
 </html>
