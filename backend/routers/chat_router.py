@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from entities.chat import chat_response
-from services.AuthService import verify_user_is_agent, verify_user_token
+from services.AuthService import verify_user_token
 from entities import message_post, Chat, Message
 from database import db
 
@@ -45,7 +45,7 @@ def post_message(msg: message_post, db: Session = Depends(db), user: dict = Depe
     db.commit()
 
 @chat.get("/{chat_id}")
-def get_message_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends(verify_user_token)) -> chat_response:
+def get_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends(verify_user_token)) -> chat_response:
     chat = db.scalar(select(Chat).where(Chat.id == chat_id))
 
     if chat is None:
