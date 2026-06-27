@@ -1,13 +1,24 @@
-from fastapi import FastAPI, routing
+from fastapi import FastAPI
 from database import engine, Base
 import routers
 
 app = FastAPI(
-    title="Role-Based Access Mock",
-    description="Simulating JWT roles using integers."
+    title="METRIC",
+    components={
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
+    # Applies this scheme to all endpoints globally
+    security=[{"BearerAuth": []}]
 )
 
 Base.metadata.create_all(bind=engine)
 
 app.include_router(routers.user)
 app.include_router(routers.auth)
+app.include_router(routers.chat)
