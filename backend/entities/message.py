@@ -30,7 +30,5 @@ class message_response(BaseModel):
     model_config = ConfigDict(from_attributes=True) 
 
 class message_post(BaseModel):
-    sender_id: int
     chat_id: int | None = None
-
     raw: str

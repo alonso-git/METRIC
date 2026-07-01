@@ -12,6 +12,8 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(nullable=False)
     role: Mapped[str] = mapped_column(default="client", nullable=False)
 
+    isActive: Mapped[bool] = mapped_column(default=False)
+
     client_chats: Mapped[list["Chat"]] = relationship(foreign_keys="[Chat.client_id]", back_populates="client") #type: ignore
     agent_chats: Mapped[list["Chat"]] = relationship(foreign_keys="[Chat.agent_id]", back_populates="agent") #type: ignore
 

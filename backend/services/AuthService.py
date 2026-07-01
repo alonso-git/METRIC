@@ -29,7 +29,7 @@ def verify_user_token(credentials: HTTPAuthorizationCredentials = Depends(securi
         if user_id is None:
             raise HTTPException(401, "Invalid token")
         
-        return {"user_id": user_id, "role": user_role}
+        return {"user_id": int(user_id), "role": user_role}
     
     except jwt.ExpiredSignatureError:
         raise HTTPException(403, "Token has expired")

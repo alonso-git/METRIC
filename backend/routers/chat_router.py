@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from services.ChatService import try_assign_agent
 from entities.chat import chat_response
-from services.AuthService import verify_user_token
+from services.AuthService import verify_user_is_client, verify_user_token
 from entities import message_post, Chat, Message
 from database import db
 
@@ -13,17 +14,24 @@ chat = APIRouter(
 )
 
 @chat.post("/")
-def post_message(msg: message_post, db: Session = Depends(db), user: dict = Depends(verify_user_token)):
+async def post_message(msg: message_post, db: Session = Depends(db), user: dict = Depends(verify_user_token)):
     chat: Chat | None = None
 
     if msg.chat_id is None and user["role"] == "client":
         chat = Chat(
-            client_id = msg.sender_id,
+            client_id = user["user_id"],
             agent_id = None
         )
         db.add(chat)
         db.flush()
         msg.chat_id = chat.id
+
+        assigned = await try_assign_agent(chat, db)
+
+        if assigned:
+            chat.status = "in_progress"
+        else:
+            chat.status = "pending_assignment"
     elif msg.chat_id is not None:
         chat = db.scalar(select(Chat).where(Chat.id == msg.chat_id))
 
@@ -31,41 +39,53 @@ def post_message(msg: message_post, db: Session = Depends(db), user: dict = Depe
         raise HTTPException(404, "No chat assigned to the agent")
 
     new_message: Message = Message(
-        sender_id = msg.sender_id,
+        sender_id = user["user_id"],
         chat_id = chat.id,
         raw = msg.raw
     )
 
     db.add(new_message)
 
-    chat.unread_agent = True if user["role"] == "client" else False
-    chat.unread_client = True if user["role"] == "agent" else False
-    chat.status = "open"
+    if user["role"] == "client":
+        chat.unread_agent = True
+    else:
+        chat.unread_client = True
 
     db.commit()
 
-@chat.get("/status/{chat_id}")
-def check_status(
-    chat_id: int,
-    db: Session = Depends(db),
-    user: dict = Depends(verify_user_token)
-):
-    chat = db.scalar(select(Chat).where(Chat.id == chat_id))
-
-    if chat is None:
-        raise HTTPException(404, "Chat not found")
-
 @chat.get("/{chat_id}")
-def get_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends(verify_user_token)) -> chat_response:
+def get_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends(verify_user_token)) -> chat_response | None:
     chat = db.scalar(select(Chat).where(Chat.id == chat_id))
 
-    if chat is None:
+    if chat is None or chat.status == "closed":
         raise HTTPException(404, "Chat not found")
-
-    if user["role"] == "agent" and chat.agent_id == user["user_id"]:
-        return chat
     
-    if user["role"] == "client" and chat.client_id == user["user_id"]:
-        return chat
+    if user["role"] == "agent" and chat.agent_id == user["user_id"]:
+        if chat.unread_agent:
+            chat.unread_agent = False
+            db.commit()
+            return chat
+        else:
+            return None
+    
+    if user["role"] == "client" and chat.client_id == user["user_id"] and chat.unread_client:
+        if chat.unread_client:
+            chat.unread_client = False
+            db.commit()
+            return chat
+        else:
+            return None
 
     raise HTTPException(403, "No chat with that id belongs to the user")
+
+@chat.patch("/close/{chat_id}")
+def close_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends(verify_user_is_client)):
+    chat = db.get(Chat, chat_id)
+
+    if chat:
+        chat.status = "closed"
+        chat.unread_agent = False
+        chat.unread_client = False
+        db.commit()
+    else:
+        HTTPException(404, "Chat not found")
