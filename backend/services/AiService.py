@@ -4,22 +4,26 @@ from config import settings
 async_client = AsyncOpenAI(api_key=settings.api_key)
 
 
-async def run_data_tool(input_data: str) -> str:
+async def run_data_tool(msg: str) -> str:
     # Use a clear, restrictive system prompt
     system_prompt = (
-        "You are a data processing tool. "
-        "Your only task is to extract the user ID and status from the provided JSON string. "
-        "Output ONLY raw JSON. Do not include conversational text, markdown, or explanations."
+        "You are a NLP tool. "
+        "Your only task is to extract the user intent and feeling from the provided "
+        "message string and provide a brief recommendation for an agent to support that "
+        "client, as short as for someone in a live phone call to read and apply it. "
+        "Output ONLY raw JSON in the format:"
+        ""
+        "Do not include conversational text, markdown, or explanations."
     )
 
     response = await async_client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="deepseek-v4-flash",
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": input_data}
+            {"role": "user", "content": msg}
         ],
         response_format={"type": "json_object"},
-        temperature=0,  # CRITICAL: Set to 0 for deterministic output
+        temperature=0.3,
     )
     
     if not response.choices[0].message.content:

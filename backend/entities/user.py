@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from entities.chat import chat_response
 from database import Base
@@ -19,11 +21,18 @@ class User(Base):
 
     messages: Mapped["Message"] = relationship(back_populates="sender") #type: ignore
 class user_response(BaseModel):
-    id:int
+    id: int
     name: str
     email: str
     role: str
 
-    chats: list[chat_response] = Field(default=[])
+    client_chats: list[chat_response] = Field(default=[])
+    agent_chats: list[chat_response] = Field(default=[])
+
 
     model_config = ConfigDict(from_attributes=True)
+
+class user_login_response(BaseModel):
+    access_token: str
+    token_type: str
+    user: user_response

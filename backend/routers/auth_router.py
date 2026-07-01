@@ -4,6 +4,7 @@ from sqlalchemy import select
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 
+from entities.user import user_login_response
 from database import db
 from entities import User
 
@@ -18,24 +19,24 @@ auth = APIRouter(
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @auth.post("/login")
-def login(credentials: LoginDto, db: Session = Depends(db)):
+def login(credentials: LoginDto, db: Session = Depends(db)) ->  user_login_response:
     stmt = select(User).where(User.email == credentials.email)
 
     user = db.scalars(stmt).one_or_none()
 
     if user:
-        
         try:
             if pwd_context.verify(credentials.password, user.password_hash):
-                return {
-                    "access_token": AuthService.create_access_token(user.id, user.role),
-                    "token_type": "bearer"
-                }
+                return user_login_response(
+                    access_token = AuthService.create_access_token(user.id, user.role),
+                    token_type = "bearer",
+                    user = user
+                )
         except UnknownHashError:
             pass
             
     
-    raise HTTPException(401, "Incorect email or password")
+    raise HTTPException(401, "Incorrect email or password")
 
 @auth.get("/my-profile")
 def get_profile(current_user: dict = Depends(AuthService.verify_user_token)):

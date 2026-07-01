@@ -10,3 +10,5 @@ async def try_assign_agent(chat: Chat, db: Session):
         return True
     return False
 
+def remove_pii(msg: str):
+    pass
