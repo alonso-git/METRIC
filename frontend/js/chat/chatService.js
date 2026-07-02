@@ -1,19 +1,36 @@
-export async function sendClientMessage(text) {
 
-    const iMessagePayload = {
-        raw_message: text,
-        context: "chat_session_active"
+export async function sendClientMessage(chatId, text) {
+    const token = localStorage.getItem('iAuthToken');
+
+    const payload = {
+        chat_id: chatId,
+        raw: text
     };
 
-    console.log("Sending serialized iMessage to Server:", JSON.stringify(iMessagePayload));
-
-    // Asynchronous simulation of a response under the iAnalysisResult contract
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                message_intent: "Account Statement Query / Financial Claim",
-                support_recommendations: "The client has questions about their current balance. Suggest validating transactions from the last 48 hours and offer downloadable account statements."
-            });
-        }, 1200);
+    const response = await fetch("http://127.0.0.1:8000/chat/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
     });
+
+    if (!response.ok) throw new Error("Error server synchronization on send");
+    return await response.json();
+}
+
+
+export async function fetchChatHistory(chatId) {
+    const token = localStorage.getItem('iAuthToken');
+
+    const response = await fetch(`http://127.0.0.1:8000/chat/${chatId}`, {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) throw new Error("Error fetching live data streams");
+    return await response.json();
 }

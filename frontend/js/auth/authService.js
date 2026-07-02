@@ -1,46 +1,37 @@
-
-
+/
 export async function loginToServer(username, password) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const userLower = username.toLowerCase();
 
-            if (userLower === "mariana" && password === "1234") {
-                resolve({
-                    status: "success",
-                    token: "eyJhbGci...mockAgentToken",
-                    user: {
-                        full_name: "Mariana Soto",
-                        role: "Support Agent"
-                    }
-                });
-            }
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
 
-            else if (userLower === "customer" && password === "1234") {
-                resolve({
-                    status: "success",
-                    token: "eyJhbGci...mockCustomerToken",
-                    user: {
-                        full_name: "Client Account",
-                        role: "Customer"
-                    }
-                });
-            } else {
-                resolve({ status: "error", message: "Invalid credentials." });
-            }
-        }, 1000);
+    const response = await fetch("http://127.0.0.1:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData
     });
-}
 
+    if (!response.ok) {
+        throw new Error("Credenciales inválidas. Inténtalo de nuevo.");
+    }
 
-export async function registerToServer(username, password) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            console.log(`Sending plain text credentials to Alonso's backend -> User: ${username}`);
-            resolve({
-                status: "success",
-                message: "Account created successfully! Switching to login..."
-            });
-        }, 1200);
+    const data = await response.json();
+
+    const profileResponse = await fetch("http://127.0.0.1:8000/auth/my-profile", {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${data.access_token}` }
     });
+
+    if (!profileResponse.ok) {
+        throw new Error("Error al recuperar el perfil del usuario.");
+    }
+
+    const profileData = await profileResponse.json();
+
+    return {
+        token: data.access_token,
+        role: profileData.role,
+        name: profileData.name,
+        user_id: profileData.id
+    };
 }
