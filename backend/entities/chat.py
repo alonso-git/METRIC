@@ -7,6 +7,10 @@ from database import Base
 
 from pydantic import BaseModel, ConfigDict
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING: # Allows type-checking but avoids circular dependencies
+    from entities import User, Message
+
 class Chat(Base):
     __tablename__ = "chat"
 
@@ -20,15 +24,15 @@ class Chat(Base):
     overall_intent: Mapped[str] = mapped_column(default="neutral", nullable=False)
     recommendations: Mapped[str] = mapped_column(default="Esperando mensajes...", nullable=False)
 
-    client: Mapped["User"] = relationship(foreign_keys=[client_id], back_populates="client_chats") #type: ignore
-    agent: Mapped["User"] = relationship(foreign_keys=[agent_id], back_populates="agent_chats") #type: ignore
+    client: Mapped[User] = relationship(foreign_keys=[client_id], back_populates="client_chats") #type: ignore
+    agent: Mapped[User] = relationship(foreign_keys=[agent_id], back_populates="agent_chats") #type: ignore
 
-    messages: Mapped[list["Message"]] = relationship(back_populates="chat") #type: ignore
+    messages: Mapped[list[Message]] = relationship(back_populates="chat") #type: ignore
 
 class chat_response(BaseModel):
     id:int
     client_id: int
-    agent_id: int
+    agent_id: int | None = None
     time: datetime
     status: str
     overall_intent: str

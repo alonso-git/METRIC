@@ -2,11 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.ChatService import try_assign_agent
+from services.AiService import run_message_analysis
+from services.ChatService import set_recommendations, try_assign_agent
 from entities.chat import chat_response
 from services.AuthService import verify_user_is_client, verify_user_token
 from entities import message_post, Chat, Message
 from database import db
+
+from config import settings
 
 chat = APIRouter(
     prefix="/chat",
@@ -32,7 +35,7 @@ async def post_message(msg: message_post, db: Session = Depends(db), user: dict 
             chat.status = "in_progress"
         else:
             chat.status = "pending_assignment"
-    elif msg.chat_id is not None:
+    else:
         chat = db.scalar(select(Chat).where(Chat.id == msg.chat_id))
 
     if chat is None:
@@ -45,6 +48,12 @@ async def post_message(msg: message_post, db: Session = Depends(db), user: dict 
     )
 
     db.add(new_message)
+    db.flush()
+
+    analysis = await run_message_analysis(new_message, db)
+    if analysis:
+        chat.overall_intent = analysis.intent
+        chat.recommendations = analysis.recommendations
 
     if user["role"] == "client":
         chat.unread_agent = True
@@ -62,6 +71,7 @@ def get_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends
     
     if user["role"] == "agent" and chat.agent_id == user["user_id"]:
         if chat.unread_agent:
+            set_recommendations(chat, db)
             chat.unread_agent = False
             db.commit()
             return chat
@@ -70,6 +80,7 @@ def get_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends
     
     if user["role"] == "client" and chat.client_id == user["user_id"] and chat.unread_client:
         if chat.unread_client:
+            set_recommendations(chat, db)
             chat.unread_client = False
             db.commit()
             return chat

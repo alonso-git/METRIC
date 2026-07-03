@@ -1,11 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, null
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
 from pydantic import BaseModel, ConfigDict
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING: # Allows type-checking but avoids circular dependencies
+    from entities import User, Chat, AnalysisResult
 
 class Message(Base):
     __tablename__ = "message"
@@ -16,9 +19,10 @@ class Message(Base):
     chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"), index=True, nullable=False)
     raw: Mapped[str] = mapped_column(nullable=False)
 
-    sender: Mapped["User"] = relationship(back_populates="messages") #type: ignore
-    chat: Mapped["Chat"] = relationship(back_populates="messages") #type: ignore
+    sender: Mapped[User] = relationship(back_populates="messages")
+    chat: Mapped[Chat] = relationship(back_populates="messages")
 
+    analysis: Mapped[AnalysisResult] = relationship(back_populates="message")
 class message_response(BaseModel):
     id:int
     time: datetime
