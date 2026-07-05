@@ -1,14 +1,14 @@
-/
 export async function loginToServer(username, password) {
 
     const formData = new URLSearchParams();
     formData.append('username', username);
     formData.append('password', password);
 
-    const response = await fetch("http://127.0.0.1:8000/auth/login", {
+ 
+     const response = await fetch("http://127.0.0.1:8000/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ "email": username, "password": password })
     });
 
     if (!response.ok) {
@@ -17,6 +17,7 @@ export async function loginToServer(username, password) {
 
     const data = await response.json();
 
+    
     const profileResponse = await fetch("http://127.0.0.1:8000/auth/my-profile", {
         method: "GET",
         headers: { "Authorization": `Bearer ${data.access_token}` }
@@ -28,10 +29,12 @@ export async function loginToServer(username, password) {
 
     const profileData = await profileResponse.json();
 
+
     return {
         token: data.access_token,
-        role: profileData.role,
-        name: profileData.name,
-        user_id: profileData.id
+        role: data.role,         
+        name: data.name,         
+        user_id: data.id,      
+        welcomeMessage: profileData.message 
     };
 }
