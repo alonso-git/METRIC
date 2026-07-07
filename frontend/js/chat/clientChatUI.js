@@ -1,11 +1,10 @@
 
-import { sendClientMessage, fetchChatHistory } from './chatService.js';
+import { sendClientMessage, fetchChatHistory, getChatIdForRole } from './chatService.js';
 
 const clientChatStream = document.getElementById('clientChatStream');
 const clientMessageInput = document.getElementById('clientMessageInput');
 const clientSendBtn = document.getElementById('clientSendBtn');
 
-let currentChatId = 1;
 const myUserId = parseInt(localStorage.getItem('userId'));
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,9 +23,11 @@ async function handleClientSend() {
     const text = clientMessageInput.value.trim();
     if (text === '') return;
 
+    console.log("enviando");
+
     try {
         clientMessageInput.value = '';
-        await sendClientMessage(currentChatId, text);
+        await sendClientMessage(text);
         await renderClientChat();
     } catch (err) {
         console.error("Error connecting with client pipeline:", err);
@@ -35,7 +36,10 @@ async function handleClientSend() {
 
 async function renderClientChat() {
     try {
-        const chatData = await fetchChatHistory(currentChatId);
+        const chatId = getChatIdForRole();
+        const chatData = await fetchChatHistory(chatId);
+        if (!chatData) return;
+
         clientChatStream.innerHTML = '';
 
         chatData.messages.forEach(msg => {

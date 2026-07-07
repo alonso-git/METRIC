@@ -1,5 +1,5 @@
 export async function loginToServer(username, password) {
-
+    console.log("Pero si o pura kk?");
     const formData = new URLSearchParams();
     formData.append('username', username);
     formData.append('password', password);
@@ -17,6 +17,7 @@ export async function loginToServer(username, password) {
 
     const data = await response.json();
 
+    console.log(data);
     
     const profileResponse = await fetch("http://127.0.0.1:8000/auth/my-profile", {
         method: "GET",
@@ -28,13 +29,16 @@ export async function loginToServer(username, password) {
     }
 
     const profileData = await profileResponse.json();
-
-
-    return {
+    
+    const result = {
         token: data.access_token,
-        role: data.role,         
-        name: data.name,         
-        user_id: data.id,      
+        role: data.user.role,
+        name: data.user.name,         
+        user_id: data.user.id,
+        client_chat: data.user.client_chats[0],
+        agent_chat: data.user.agent_chats[0],
         welcomeMessage: profileData.message 
     };
+
+    return result;
 }

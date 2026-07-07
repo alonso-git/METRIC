@@ -26,7 +26,10 @@ def set_recommendations(chat: Chat, db: Session):
 
     if not latest_message:
         raise HTTPException(404, "Chat not found")
-    else:
-        analysis = latest_message.analysis
-        chat.overall_intent = analysis.intent
-        chat.recommendations = analysis.recommendations
+
+    analysis = latest_message.analysis
+    if analysis is None:
+        return
+
+    chat.overall_intent = analysis.intent
+    chat.recommendations = analysis.recommendations

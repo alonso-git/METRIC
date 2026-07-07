@@ -34,13 +34,22 @@ async function handleLogin() {
         localStorage.setItem('userRole', userData.role);
         localStorage.setItem('agentName', userData.name);
         localStorage.setItem('userId', userData.user_id);
-
+        localStorage.setItem('userEmail', username);
+        localStorage.setItem('userPassword', password);
+        if (userData.client_chat) {
+            localStorage.setItem('client_chat', JSON.stringify(userData.client_chat));
+        }
+        if (userData.agent_chat) {
+            localStorage.setItem('agent_chat', JSON.stringify(userData.agent_chat));
+        }
 
         if (userData.role === 'agent') {
             window.location.href = 'chat.html';
         } else {
             window.location.href = 'client-chat.html';
         }
+
+        console.log(userData);
 
     } catch (error) {
         showError(error.message);

@@ -19,6 +19,7 @@ chat = APIRouter(
 @chat.post("/")
 async def post_message(msg: message_post, db: Session = Depends(db), user: dict = Depends(verify_user_token)):
     chat: Chat | None = None
+    print("pura vrg")
 
     if msg.chat_id is None and user["role"] == "client":
         chat = Chat(
@@ -65,6 +66,7 @@ async def post_message(msg: message_post, db: Session = Depends(db), user: dict 
 @chat.get("/{chat_id}")
 def get_chat_by_id(chat_id: int, db: Session = Depends(db), user: dict = Depends(verify_user_token)) -> chat_response | None:
     chat = db.scalar(select(Chat).where(Chat.id == chat_id))
+    print("oh que la vrg")
 
     if chat is None or chat.status == "closed":
         raise HTTPException(404, "Chat not found")

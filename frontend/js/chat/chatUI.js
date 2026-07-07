@@ -1,5 +1,5 @@
 
-import { sendClientMessage, fetchChatHistory } from './chatService.js';
+import { sendClientMessage, fetchChatHistory, getChatIdForRole } from './chatService.js';
 
 const chatFeed = document.getElementById('chatFeed');
 const messageInput = document.getElementById('messageInput');
@@ -7,12 +7,9 @@ const sendBtn = document.getElementById('sendBtn');
 const aiIntent = document.getElementById('aiIntent');
 const aiRecommendations = document.getElementById('aiRecommendations');
 
-
-let currentChatId = 1;
 const myUserId = parseInt(localStorage.getItem('userId'));
 
 document.addEventListener('DOMContentLoaded', () => {
-
     if (!localStorage.getItem('iAuthToken')) {
         window.location.href = 'index.html';
         return;
@@ -20,6 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('agentName').innerText = `Agent: ${localStorage.getItem('agentName') || 'Mariana Soto'}`;
 
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    });
 
     renderLiveChat();
     setInterval(renderLiveChat, 1500);
@@ -35,7 +36,7 @@ async function handleOutgoing() {
     try {
         messageInput.value = '';
 
-        await sendClientMessage(currentChatId, text);
+        await sendClientMessage(text);
 
         await renderLiveChat();
     } catch (err) {
@@ -45,11 +46,11 @@ async function handleOutgoing() {
 
 async function renderLiveChat() {
     try {
-        const chatData = await fetchChatHistory(currentChatId);
-
+        const chatId = getChatIdForRole();
+        const chatData = await fetchChatHistory(chatId);
+        if (!chatData) return;
 
         chatFeed.innerHTML = '<div class="text-center text-slate-500 text-xs my-2">Chat started securely. Local link active</div>';
-
 
         chatData.messages.forEach(msg => {
             if (msg.sender_id === myUserId) {
@@ -59,10 +60,8 @@ async function renderLiveChat() {
             }
         });
 
-
         aiIntent.innerText = chatData.overall_intent || "Analyzing intent...";
         aiRecommendations.innerHTML = `<p class="text-slate-100">${chatData.recommendations || 'Waiting for insights...'}</p>`;
-
     } catch (error) {
         console.log("Polling database stream, waiting for agent assignment sync...");
     }
@@ -78,9 +77,4 @@ function renderBubble(sender, text, bgClass) {
     `;
     chatFeed.appendChild(wrapper);
     chatFeed.scrollTop = chatFeed.scrollHeight;
-
-
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-    });
+}
