@@ -2,3 +2,8 @@
 __pycache__/*
 venv/*
 app.db
+.venv/
+venv/
+__pycache__/
+.env
+backend/.env

@@ -48,3 +48,4 @@ def verify_user_is_client(user: dict = Depends(verify_user_token)):
         return user
     
     raise HTTPException(403, "Not a client")
+
