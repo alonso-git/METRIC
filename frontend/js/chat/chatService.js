@@ -9,7 +9,7 @@ async function getToken() {
     if (!email || !password) return null;
 
     if (!tokenPromise) {
-        tokenPromise = fetch("http://127.0.0.1:8000/auth/login", {
+        tokenPromise = fetch("/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password })
@@ -58,7 +58,7 @@ async function apiFetch(url, options) {
 
     let response = await fetch(url, options);
 
-    if ((response.status === 401 || response.status === 403) && token) {
+    if (response.status === 401) {
         localStorage.removeItem('iAuthToken');
         token = await getToken();
         if (!token) throw new Error(`Session expired (${response.status})`);
@@ -78,7 +78,7 @@ export async function sendClientMessage(text) {
 
     console.log("Sending payload:", JSON.stringify(payload));
 
-    let response = await apiFetch("http://127.0.0.1:8000/chat/", {
+    let response = await apiFetch("/chat/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -90,7 +90,7 @@ export async function sendClientMessage(text) {
         chatId = null;
         const retryPayload = { raw: text };
         console.log("Stale chat, retrying without chat_id:", JSON.stringify(retryPayload));
-        response = await apiFetch("http://127.0.0.1:8000/chat/", {
+        response = await apiFetch("/chat/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(retryPayload)
@@ -110,7 +110,7 @@ export async function sendClientMessage(text) {
 
 async function updateChatsFromLogin() {
     try {
-        const response = await fetch("http://127.0.0.1:8000/auth/login", {
+        const response = await fetch("/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -134,12 +134,37 @@ async function updateChatsFromLogin() {
 export async function fetchChatHistory(chatId) {
     if (!chatId) return null;
 
-    const response = await apiFetch(`http://127.0.0.1:8000/chat/${chatId}`, {
+    const response = await apiFetch(`/chat/${chatId}`, {
         method: "GET"
     });
 
     if (!response.ok) return null;
+    if (response.status === 404 || response.status === 403) {
+        clearStaleChat();
+    }
+    if (!response.ok) return null;
     const text = await response.text();
     if (!text) return null;
     return JSON.parse(text);
+}
+
+function clearStaleChat() {
+    const role = localStorage.getItem('userRole');
+    const key = role === 'agent' ? 'agent_chat' : 'client_chat';
+    localStorage.removeItem(key);
+}
+
+export async function heartbeat() {
+    try {
+        const response = await apiFetch("/auth/my-profile", { method: "GET" });
+        if (!response.ok) return;
+        const data = await response.json();
+        const role = localStorage.getItem("userRole");
+        if (role === "agent" && data.agent_chat) {
+            localStorage.setItem("agent_chat", JSON.stringify(data.agent_chat));
+        }
+        if (role === "client" && data.client_chat) {
+            localStorage.setItem("client_chat", JSON.stringify(data.client_chat));
+        }
+    } catch (e) {}
 }

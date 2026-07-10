@@ -1,5 +1,5 @@
 
-import { sendClientMessage, fetchChatHistory, getChatIdForRole } from './chatService.js';
+import { sendClientMessage, fetchChatHistory, getChatIdForRole, heartbeat } from './chatService.js';
 
 const clientChatStream = document.getElementById('clientChatStream');
 const clientMessageInput = document.getElementById('clientMessageInput');
@@ -37,6 +37,10 @@ async function handleClientSend() {
 async function renderClientChat() {
     try {
         const chatId = getChatIdForRole();
+        if (!chatId) {
+            await heartbeat();
+            return;
+        }
         const chatData = await fetchChatHistory(chatId);
         if (!chatData) return;
 

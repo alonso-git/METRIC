@@ -1,5 +1,5 @@
 
-import { sendClientMessage, fetchChatHistory, getChatIdForRole } from './chatService.js';
+import { sendClientMessage, fetchChatHistory, getChatIdForRole, heartbeat } from './chatService.js';
 
 const chatFeed = document.getElementById('chatFeed');
 const messageInput = document.getElementById('messageInput');
@@ -47,6 +47,10 @@ async function handleOutgoing() {
 async function renderLiveChat() {
     try {
         const chatId = getChatIdForRole();
+        if (!chatId) {
+            await heartbeat();
+            return;
+        }
         const chatData = await fetchChatHistory(chatId);
         if (!chatData) return;
 
