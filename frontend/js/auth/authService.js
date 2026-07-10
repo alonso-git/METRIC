@@ -4,8 +4,8 @@ export async function loginToServer(username, password) {
     formData.append('username', username);
     formData.append('password', password);
 
- 
-     const response = await fetch("http://127.0.0.1:8000/auth/login", {
+
+    const response = await fetch("http://127.0.0.1:8000/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ "email": username, "password": password })
@@ -18,7 +18,7 @@ export async function loginToServer(username, password) {
     const data = await response.json();
 
     console.log(data);
-    
+
     const profileResponse = await fetch("http://127.0.0.1:8000/auth/my-profile", {
         method: "GET",
         headers: { "Authorization": `Bearer ${data.access_token}` }
@@ -29,16 +29,45 @@ export async function loginToServer(username, password) {
     }
 
     const profileData = await profileResponse.json();
-    
+
     const result = {
         token: data.access_token,
         role: data.user.role,
-        name: data.user.name,         
+        name: data.user.name,
         user_id: data.user.id,
         client_chat: data.user.client_chats[0],
         agent_chat: data.user.agent_chats[0],
-        welcomeMessage: profileData.message 
+        welcomeMessage: profileData.message
     };
 
     return result;
+}
+export async function registerClient(name, email, password) {
+    const response = await fetch("http://127.0.0.1:8000/users/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Error al registrar cliente");
+    }
+
+    return response.json();
+}
+
+export async function registerAgent(name, email, password) {
+    const response = await fetch("http://127.0.0.1:8000/users/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Error al registrar agente");
+    }
+
+    return response.json();
 }
