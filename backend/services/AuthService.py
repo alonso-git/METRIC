@@ -49,3 +49,13 @@ def verify_user_is_client(user: dict = Depends(verify_user_token)):
     
     raise HTTPException(403, "Not a client")
 
+
+def mark_user_active(user_id: int, db):
+    from entities import User
+    from sqlalchemy import update
+    
+    db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(last_active=datetime.now(timezone.utc))
+    )

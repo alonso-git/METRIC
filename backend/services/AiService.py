@@ -1,59 +1,61 @@
-from typing import Any
-
-from google import genai
-from entities import AnalysisResult, message_response
+import json
+import httpx
+from entities import AnalysisResult, analysis_result_ai_response
 from config import settings
-from entities import analysis_result_ai_response
 from sqlalchemy.orm import Session
 
-# 1. Initialize the new SDK client (sync and async are handled through the same client object)
-client = genai.Client(api_key=settings.api_key)
+API_URL = "https://opencode.ai/zen/go/v1/chat/completions"
 
-async def run_message_analysis(msg: message_response, db: Session) -> analysis_result_ai_response | None:
-    schema = analysis_result_ai_response.model_json_schema()
+SYSTEM_PROMPT = (
+    "You are an NLP tool embedded in a customer support chat system. "
+    "Your only task is to analyze the user message and output a JSON object "
+    "with two fields:\n"
+    '  "intent"      — a short label describing what the customer wants or feels\n'
+    '  "recommendations" — a brief suggestion for the support agent on how to reply\n'
+    "Respond in the same language as the customer's message. "
+    "Output ONLY the JSON object, no markdown, no explanations."
+)
 
-    system_prompt = (
-        "You are a NLP tool. "
-        "Your only task is to extract the user intent and feeling from the provided "
-        "message string and provide a brief recommendation for an agent to support that "
-        "client, as short as for someone in a live phone call to read and apply it. " \
-        "The response content must match the language in which you received the raw message. "
-        "Output ONLY raw JSON in the format:"
-        "Do not include conversational text, markdown, or explanations."
-    )
+
+async def run_message_analysis(msg, db: Session) -> analysis_result_ai_response | None:
+    payload = {
+        "model": "deepseek-v4-pro",
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": msg.raw},
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.3,
+    }
 
     try:
-        # 2. Use the async client (.aio) and properly group the parameters
-        interaction: Any = await client.aio.interactions.create(
-            model="gemini-3.5-flash",
-            input=msg.raw,
-            system_instruction=system_prompt,
-            # Schema and MIME type MUST be grouped in response_format
-            response_format={
-                "type": "text",
-                "mime_type": "application/json",
-                "schema": schema
-            },
-            # Temperature and token limits MUST be grouped in generation_config
-            generation_config={
-                "temperature": 0.3
-            }
-        )
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                API_URL,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {settings.api_key}",
+                },
+                json=payload,
+            )
 
-        answer = interaction.output_text
-        answer = answer if answer else ''
-        
-        analysis = analysis_result_ai_response.model_validate_json(answer)
-        
+        if response.status_code != 200:
+            print(f"AI API error ({response.status_code}): {response.text[:200]}")
+            return None
+
+        content = response.json()["choices"][0]["message"]["content"]
+        parsed = json.loads(content)
+        analysis = analysis_result_ai_response.model_validate(parsed)
+
         db_analysis = AnalysisResult(
-            message_id = msg.id,
-            intent = analysis.intent,
-            recommendations = analysis.recommendations
+            message_id=msg.id,
+            intent=analysis.intent,
+            recommendations=analysis.recommendations,
         )
         db.add(db_analysis)
-        
+
         return analysis
 
     except Exception as e:
-        print(f"AI is dumb, dude: {e}")
+        print(f"AI analysis skipped: {e}")
         return None

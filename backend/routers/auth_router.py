@@ -27,6 +27,8 @@ def login(credentials: LoginDto, db: Session = Depends(db)) ->  user_login_respo
     if user:
         try:
             if pwd_context.verify(credentials.password, user.password_hash):
+                AuthService.mark_user_active(user.id, db)
+                db.commit()
                 return user_login_response(
                     access_token = AuthService.create_access_token(user.id, user.role),
                     token_type = "bearer",
@@ -39,6 +41,31 @@ def login(credentials: LoginDto, db: Session = Depends(db)) ->  user_login_respo
     raise HTTPException(401, "Incorrect email or password")
 
 @auth.get("/my-profile")
-def get_profile(current_user: dict = Depends(AuthService.verify_user_token)):
-    # You already have the role and user_id here!
-    return {"message": f"Hello user {current_user['user_id']}, your role is {current_user['role']}"}
+def get_profile(db: Session = Depends(db), user: dict = Depends(AuthService.verify_user_token)):
+    AuthService.mark_user_active(user["user_id"], db)
+
+    db_user = db.scalars(select(User).where(User.id == user["user_id"])).one_or_none()
+
+    if user["role"] == "agent":
+        agent_chat = None
+        for c in (db_user.agent_chats or []):
+            if c.status != "closed":
+                agent_chat = {"id": c.id, "status": c.status, "client_id": c.client_id}
+                break
+        db.commit()
+        return {
+            "message": f"Hello user {user['user_id']}, your role is {user['role']}",
+            "agent_chat": agent_chat,
+        }
+
+    client_chat = None
+    for c in (db_user.client_chats or []):
+        if c.status != "closed":
+            client_chat = {"id": c.id, "status": c.status, "agent_id": c.agent_id}
+            break
+
+    db.commit()
+    return {
+        "message": f"Hello user {user['user_id']}, your role is {user['role']}",
+        "client_chat": client_chat,
+    }

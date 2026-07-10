@@ -1,4 +1,5 @@
 from typing import TypedDict
+from datetime import datetime
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from entities.chat import chat_response
@@ -19,7 +20,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(nullable=False)
     role: Mapped[str] = mapped_column(default="client", nullable=False)
 
-    isActive: Mapped[bool] = mapped_column(default=False)
+    last_active: Mapped[datetime | None] = mapped_column(default=None, nullable=True)
 
     client_chats: Mapped[list[Chat]] = relationship(foreign_keys="[Chat.client_id]", back_populates="client") #type: ignore
     agent_chats: Mapped[list[Chat]] = relationship(foreign_keys="[Chat.agent_id]", back_populates="agent") #type: ignore

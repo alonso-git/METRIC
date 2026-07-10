@@ -2,10 +2,17 @@ from fastapi import HTTPException
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, joinedload
 from entities import Chat, User, Message
-import re
+from datetime import datetime, timedelta, timezone
+
+ACTIVE_WINDOW = timedelta(seconds=30)
 
 async def try_assign_agent(chat: Chat, db: Session):
-    chosen = db.scalars(select(User).where(User.role == "agent").where(User.isActive)).first()
+    threshold = datetime.now(timezone.utc) - ACTIVE_WINDOW
+    chosen = db.scalars(
+        select(User)
+        .where(User.role == "agent")
+        .where(User.last_active >= threshold)
+    ).first()
 
     if chosen:
         chat.agent_id = chosen.id
