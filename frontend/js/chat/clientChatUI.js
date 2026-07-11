@@ -1,9 +1,9 @@
-
-import { sendClientMessage, fetchChatHistory, getChatIdForRole, heartbeat } from './chatService.js';
+import { sendClientMessage, fetchChatHistory, getChatIdForRole, closeChat } from './chatService.js';
 
 const clientChatStream = document.getElementById('clientChatStream');
 const clientMessageInput = document.getElementById('clientMessageInput');
 const clientSendBtn = document.getElementById('clientSendBtn');
+const closeChatBtn = document.getElementById('closeChatBtn');
 
 const myUserId = parseInt(localStorage.getItem('userId'));
 
@@ -14,6 +14,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     renderClientChat();
     setInterval(renderClientChat, 1500);
+
+    if (closeChatBtn) {
+        closeChatBtn.addEventListener('click', async () => {
+            const chatId = getChatIdForRole();
+            if (!chatId) {
+                alert('No active chat to close.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to close this chat? You will not be able to send more messages.')) {
+                try {
+                    await closeChat(chatId);
+                    alert('Chat closed successfully.');
+                    localStorage.removeItem('client_chat');
+                    window.location.reload();
+                } catch (error) {
+                    alert(`Error closing chat: ${error.message}`);
+                }
+            }
+        });
+    }
 });
 
 clientSendBtn.addEventListener('click', handleClientSend);
@@ -38,7 +59,7 @@ async function renderClientChat() {
     try {
         const chatId = getChatIdForRole();
         if (!chatId) {
-            await heartbeat();
+
             return;
         }
         const chatData = await fetchChatHistory(chatId);

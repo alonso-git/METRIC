@@ -9,7 +9,7 @@ async function getToken() {
     if (!email || !password) return null;
 
     if (!tokenPromise) {
-        tokenPromise = fetch("/auth/login", {
+        tokenPromise = fetch("http://127.0.0.1:8000/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password })
@@ -58,7 +58,7 @@ async function apiFetch(url, options) {
 
     let response = await fetch(url, options);
 
-    if (response.status === 401) {
+    if ((response.status === 401 || response.status === 403) && token) {
         localStorage.removeItem('iAuthToken');
         token = await getToken();
         if (!token) throw new Error(`Session expired (${response.status})`);
@@ -78,7 +78,8 @@ export async function sendClientMessage(text) {
 
     console.log("Sending payload:", JSON.stringify(payload));
 
-    let response = await apiFetch("/chat/", {
+
+    let response = await apiFetch("http://127.0.0.1:8000/chat/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -90,7 +91,7 @@ export async function sendClientMessage(text) {
         chatId = null;
         const retryPayload = { raw: text };
         console.log("Stale chat, retrying without chat_id:", JSON.stringify(retryPayload));
-        response = await apiFetch("/chat/", {
+        response = await apiFetch("http://127.0.0.1:8000/chat/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(retryPayload)
@@ -101,70 +102,58 @@ export async function sendClientMessage(text) {
         throw new Error(`Server error (${response.status})`);
     }
 
-    if (role === 'client' && !chatId) {
-        await updateChatsFromLogin();
+    const data = await response.json();
+    if (data && data.chat_id) {
+        const key = role === 'agent' ? 'agent_chat' : 'client_chat';
+        localStorage.setItem(key, JSON.stringify({ id: data.chat_id }));
     }
 
-    return null;
-}
-
-async function updateChatsFromLogin() {
-    try {
-        const response = await fetch("/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                email: localStorage.getItem('userEmail'),
-                password: localStorage.getItem('userPassword')
-            })
-        });
-        if (!response.ok) return;
-        const data = await response.json();
-        if (data.user.client_chats && data.user.client_chats.length > 0) {
-            localStorage.setItem('client_chat', JSON.stringify(data.user.client_chats[0]));
-        }
-        if (data.user.agent_chats && data.user.agent_chats.length > 0) {
-            localStorage.setItem('agent_chat', JSON.stringify(data.user.agent_chats[0]));
-        }
-    } catch (e) {
-        console.error("Could not refresh chat list:", e);
-    }
+    return data;
 }
 
 export async function fetchChatHistory(chatId) {
     if (!chatId) return null;
 
-    const response = await apiFetch(`/chat/${chatId}`, {
+    const response = await apiFetch(`http://127.0.0.1:8000/chat/${chatId}`, {
         method: "GET"
     });
 
-    if (!response.ok) return null;
-    if (response.status === 404 || response.status === 403) {
-        clearStaleChat();
-    }
     if (!response.ok) return null;
     const text = await response.text();
     if (!text) return null;
     return JSON.parse(text);
 }
-
-function clearStaleChat() {
-    const role = localStorage.getItem('userRole');
-    const key = role === 'agent' ? 'agent_chat' : 'client_chat';
-    localStorage.removeItem(key);
-}
-
 export async function heartbeat() {
+
     try {
-        const response = await apiFetch("/auth/my-profile", { method: "GET" });
-        if (!response.ok) return;
-        const data = await response.json();
-        const role = localStorage.getItem("userRole");
-        if (role === "agent" && data.agent_chat) {
-            localStorage.setItem("agent_chat", JSON.stringify(data.agent_chat));
+        const token = await getToken();
+        if (!token) return null;
+        const response = await fetch("http://127.0.0.1:8000/auth/my-profile", {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            console.log("Heartbeat: token inválido o expirado");
+            return null;
         }
-        if (role === "client" && data.client_chat) {
-            localStorage.setItem("client_chat", JSON.stringify(data.client_chat));
-        }
-    } catch (e) {}
+        return await response.json();
+    } catch (e) {
+        console.log("Heartbeat falló:", e);
+        return null;
+    }
 }
+export async function closeChat(chatId) {
+    if (!chatId) throw new Error("No chat ID provided");
+
+    const response = await apiFetch(`http://127.0.0.1:8000/chat/close/${chatId}`, {
+        method: "PATCH"
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to close chat");
+    }
+
+    return true;
+}
+

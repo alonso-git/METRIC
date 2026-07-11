@@ -4,8 +4,7 @@ export async function loginToServer(username, password) {
     formData.append('username', username);
     formData.append('password', password);
 
-
-    const response = await fetch("/auth/login", {
+    const response = await fetch("http://127.0.0.1:8000/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ "email": username, "password": password })
@@ -19,7 +18,7 @@ export async function loginToServer(username, password) {
 
     console.log(data);
 
-    const profileResponse = await fetch("/auth/my-profile", {
+    const profileResponse = await fetch("http://127.0.0.1:8000/auth/my-profile", {
         method: "GET",
         headers: { "Authorization": `Bearer ${data.access_token}` }
     });
@@ -42,31 +41,42 @@ export async function loginToServer(username, password) {
 
     return result;
 }
+
 export async function registerClient(name, email, password) {
-    const response = await fetch("/users/clients", {
+    const response = await fetch("http://127.0.0.1:8000/users/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password })
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Error al registrar cliente");
+        const error = await response.text();
+        try {
+            const jsonError = JSON.parse(error);
+            throw new Error(jsonError.detail || "Error al registrar cliente");
+        } catch (e) {
+            throw new Error(error || "Error al registrar cliente");
+        }
     }
 
     return response.json();
 }
 
 export async function registerAgent(name, email, password) {
-    const response = await fetch("/users/agents", {
+    const response = await fetch("http://127.0.0.1:8000/users/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password })
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Error al registrar agente");
+        const error = await response.text();
+        try {
+            const jsonError = JSON.parse(error);
+            throw new Error(jsonError.detail || "Error al registrar agente");
+        } catch (e) {
+            throw new Error(error || "Error al registrar agente");
+        }
     }
 
     return response.json();

@@ -16,10 +16,19 @@
             <h1 class="text-lg font-bold tracking-tight text-white">METRIC <span
                     class="text-blue-400 text-xs font-medium ml-2">Customer Hub</span></h1>
         </div>
-        <button onclick="localStorage.clear(); window.location.href='index.html';"
-            class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
-            Logout
-        </button>
+
+        <div class="flex items-center space-x-3">
+
+            <button id="closeChatBtn"
+                class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+                Close Chat
+            </button>
+
+            <button onclick="localStorage.clear(); window.location.href='index.html';"
+                class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+                Logout
+            </button>
+        </div>
     </header>
 
     <main class="flex-1 flex flex-col max-w-3xl w-full mx-auto p-4 md:p-6 overflow-hidden">
@@ -45,8 +54,7 @@
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center space-x-3 shadow-xl">
             <input type="text" id="clientMessageInput" placeholder="Type your request here..."
                 class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
-            <button
-                id="clientSendBtn"
+            <button id="clientSendBtn"
                 class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-md">
                 Send
             </button>

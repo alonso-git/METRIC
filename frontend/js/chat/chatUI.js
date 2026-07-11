@@ -1,6 +1,5 @@
 
 import { sendClientMessage, fetchChatHistory, getChatIdForRole, heartbeat } from './chatService.js';
-
 const chatFeed = document.getElementById('chatFeed');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
